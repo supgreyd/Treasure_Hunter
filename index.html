@@ -17,25 +17,49 @@
     let loader = PIXI.Loader.shared,
         Application = PIXI.Application,
         Sprite = PIXI.Sprite,
-        Container = PIXI.ParticleContainer
+        Container = PIXI.ParticleContainer,
+        Text = PIXI.Text,
+        TextStyle = PIXI.TextStyle
+
+    const WIDTH =512, HEIGHT = 512
 
     let app = new Application({
-        width: 512,
-        height: 512,
+        width: WIDTH,
+        height: HEIGHT,
         antialias: true,
         transparent: false,
         resolution: 1,
-        backgroundColor: 3093153
+        backgroundColor: 15658734
     });
 
     document.body.appendChild(app.view);
 
-    let dungeon, explorer, treasure, door, gameState, blobs = [];
+    let dungeon, explorer, treasure, door, gameState, msg, blobs = [], textStyle;
     let gameScene = new Container();
+    let menuScene = new Container();
+
+    loader.add('./images/thunter.json')
+    loader.load(setup)
 
     function setup() {
+        // menu scene
+        app.stage.addChild(menuScene);
+        textStyle = new TextStyle({
+            fontSize: 24,
+            fill: '#3498db',
+            stroke: '#34495e',
+            align: 'center',
+            strokeThickness: 10,
+            lineJoin: 'round',
+            strokeWidth: 2
+        });
+        msg = new Text("Treasure Hunter\nPress ENTER to start", textStyle)
+        msg.x = WIDTH / 2 - msg.width / 2;
+        msg.y = HEIGHT / 2 - msg.height / 2;
+
+        menuScene.addChild(msg)
+
         app.stage.addChild(gameScene);
-        // gameScene.visible = false
 
         let id = loader.resources['./images/thunter.json'].textures
 
@@ -72,14 +96,6 @@
             blobs.push(blob);
             gameScene.addChild(blob)
         }
-
-        // menu scene
-
-        let menuScene = new Container();
-        app.stage.addChild(menuScene);
-        menuScene.visible = false
-        menuScene.height = 512;
-        menuScene.width = 512;
 
         //movement handle
         let left = keyboard("ArrowLeft"),
@@ -131,9 +147,9 @@
 
         gameState = stopGame;
         document.addEventListener('keypress', function (e) {
-            console.log({e})
             if (e.key === 'Enter') {
                 gameState = play;
+                menuScene.visible = false
                 gameScene.visible = true;
                 explorer.position.set(68, app.stage.height / 2 - explorer.height / 2);
                 treasure.position.set(app.stage.width - treasure.width - 48, app.stage.height / 2 - treasure.height / 2)
@@ -141,9 +157,6 @@
         })
         app.ticker.add(delta => gameLoop(delta))
     }
-
-    loader.add('./images/thunter.json')
-    loader.load(setup)
 
     function randomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -169,8 +182,9 @@
             }
 
             if(hitTestRectangle(explorer, blob)) {
-                console.log('EXPLORER DIED')
-                gameState = stopGame
+                console.log('EXPLORER DIED');
+                gameState = stopGame;
+                msg.text = 'You got wasted\nPress ENTER to restart';
             }
         });
 
@@ -184,10 +198,12 @@
         if (hitTestRectangle(treasure,door)) {
             console.log('GAME WON')
             gameState = stopGame
+            msg.text = 'You won!\nPress ENTER to restart';
         }
     }
 
     function stopGame() {
+        menuScene.visible = true
         gameScene.visible = false
     }
 
